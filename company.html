@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Company Details</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- <link rel="stylesheet" href="market.css"> -->
+   <style>
+    :root {
+  --bg-dark: #0f172a;
+  --bg-card: #1e293b;
+  --text-light: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent: #6d28d9;
+  --accent-light: #a78bfa;
+  --radius: 12px;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-light);
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* Header & Navigation */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--accent-light);
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+nav a {
+  text-decoration: none;
+  color: var(--text-light);
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+nav a:hover {
+  color: var(--accent-light);
+}
+
+/* Portfolio Card */
+.portfolio-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rank-badge {
+  background: var(--accent-light);
+  color: #000;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.tab {
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+  padding-bottom: 4px;
+  transition: 0.2s;
+}
+
+.tab.active {
+  color: var(--accent-light);
+  border-color: var(--accent-light);
+}
+
+/* Chart */
+.chart-container {
+  width: 100%;
+  height: 320px;
+  margin-bottom: 1.5rem;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.stat {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center;
+}
+
+.stat h3 {
+  margin: 0.3rem 0;
+  font-weight: 700;
+}
+
+.stat p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.green {
+  color: #4ade80;
+}
+
+/* Company Details Page Specific Styles */
+.company-details-container {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+  margin-top: 2rem;
+}
+
+.search-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.search-row input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-light);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.search-row input:focus {
+  outline: none;
+  border-color: var(--accent-light);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+}
+
+.search-row button {
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
+}
+
+.search-row button:hover {
+  background: var(--accent-light);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(109, 40, 217, 0.4);
+}
+
+.search-row button:active {
+  transform: translateY(0);
+}
+
+.quote-box {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(109, 40, 217, 0.1), rgba(167, 139, 250, 0.05));
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: var(--radius);
+  margin-bottom: 2rem;
+}
+
+.quote-price {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--accent-light);
+  line-height: 1.1;
+}
+
+.quote-change {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.quote-change.positive {
+  color: #4ade80;
+}
+
+.quote-change.negative {
+  color: #f87171;
+}
+
+.chart-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: var(--radius);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.status-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  color: #ffc107;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.status-badge.live {
+  background: rgba(74, 222, 128, 0.15);
+  border-color: rgba(74, 222, 128, 0.4);
+  color: #4ade80;
+}
+
+.news-container {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+  border-radius: var(--radius);
+  padding: 2rem;
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  margin-bottom: 2rem;
+}
+
+.news-card {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: var(--radius);
+  background: rgba(109, 40, 217, 0.08);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  transition: all 0.2s ease;
+}
+
+.news-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(167, 139, 250, 0.4);
+  background: rgba(109, 40, 217, 0.12);
+}
+
+.news-card h3 {
+  margin-top: 0;
+  color: var(--text-light);
+}
+
+.news-card p {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.news-card small {
+  color: var(--text-muted);
+}
+
+.news-card a {
+  color: var(--accent-light);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.news-card a:hover {
+  text-decoration: underline;
+}
+
+.debug-console {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(167, 139, 250, 0.15);
+  border-radius: var(--radius);
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.debug-console h3 {
+  margin-top: 0;
+}
+
+.debug-console p {
+  color: var(--text-muted);
+}
+
+/* Search Results */
+.search-results {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(2,6,23,0.6);
+  overflow: hidden;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 1200;
+  color: var(--text-light);
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+  font-size: 0.95rem;
+}
+
+.result-item:hover {
+  background: rgba(167,139,250,0.06);
+}
+
+.result-item small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+/* Modal for company details */
+.company-modal { 
+  display: none; 
+  position: fixed; 
+  inset: 0; 
+  z-index: 2000; 
+  font-family: inherit; 
+}
+
+.company-modal[aria-hidden="false"] { 
+  display: block; 
+}
+
+.modal-backdrop {
+  position: absolute; 
+  inset: 0; 
+  background: rgba(2,6,23,0.6);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  width: 720px;
+  max-width: calc(100% - 32px);
+  margin: 6vh auto;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 12px 48px rgba(2,6,23,0.7);
+  z-index: 2100;
+  color: var(--text-light);
+}
+
+.modal-close {
+  position: absolute; 
+  right: 12px; 
+  top: 8px;
+  background: transparent; 
+  border: none; 
+  color: var(--text-light); 
+  font-size: 18px; 
+  cursor: pointer;
+}
+
+.modal-head { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  gap: 12px; 
+  margin-bottom: 8px; 
+}
+
+.modal-head h3 { 
+  margin: 0; 
+  font-size: 1.1rem; 
+  color: var(--accent-light); 
+}
+
+#modalSymbol { 
+  color: var(--text-muted); 
+  font-weight: 700; 
+}
+
+.modal-body { 
+  padding-top: 4px; 
+}
+
+.quote-row { 
+  display: flex; 
+  gap: 18px; 
+  align-items: center; 
+}
+
+.quote-main { 
+  flex: 1; 
+}
+
+.price { 
+  font-size: 1.8rem; 
+  font-weight: 700; 
+  margin-bottom: 6px; 
+}
+
+.change { 
+  font-weight: 600; 
+}
+
+.quote-stats { 
+  display: flex; 
+  gap: 12px; 
+  color: var(--text-muted); 
+  font-size: 0.9rem; 
+}
+
+.quote-stats div { 
+  text-align: center; 
+  min-width: 84px; 
+}
+
+.mini-chart-container { 
+  margin-top: 12px; 
+  background: transparent; 
+  padding: 6px 0; 
+}
+
+/* Modal footer */
+.modal-footer { 
+  margin-top: 12px; 
+  display: flex; 
+  justify-content: flex-end; 
+}
+
+.modal-footer button { 
+  padding: 8px 12px; 
+  border-radius: 10px; 
+  border: none; 
+  cursor: pointer; 
+  background: var(--accent); 
+  color: #fff; 
+}
+
+/* Profile title with search */
+.profile-title {
+  position: relative;
+}
+
+/* Responsive adjustments */
+@media (max-width: 700px) {
+  body {
+    padding: 1rem;
+  }
+  
+  .modal-content { 
+    width: calc(100% - 24px); 
+    margin: 10vh 12px; 
+  }
+  
+  .quote-row { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 8px; 
+  }
+  
+  .quote-stats { 
+    width: 100%; 
+    justify-content: space-between; 
+  }
+  
+  .search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-row button {
+    width: 100%;
+  }
+  
+  nav ul {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+   </style>
+</head>
+
+<body>
+
+    <div class="container">
+      <header>
+        <div><a href="index.html"><div class="logo">Stockman</div></a></div>
+        <nav>
+          <ul>
+              <li><a href="index.html">Home</a></li>
+              <li><a href="page1.html">Portfolio</a></li>
+              <li><a href="game-rooms.html">Game Rooms</a></li>
+              <li><a href="market-news.html">Market</a></li>
+              <li><a href="company.html" class="active">Companies</a></li>
+              <li><a href="#" id="authLink">Login</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <h1 style="margin-bottom: 1.5rem; color: var(--accent-light);">Company Stock Details</h1>
+
+        <!-- Search Row -->
+        <div class="search-row">
+            <input type="text" id="symbolInput" placeholder="Enter company symbol (AAPL, TSLA, MSFT)">
+            <button onclick="loadCompany()">Load</button>
+        </div>
+
+        <!-- Quote Box -->
+        <div id="quoteBox" class="quote-box">
+            <div style="flex: 1;">
+                <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Current Price</div>
+                <div class="quote-price" id="quotePrice">—</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Change</div>
+                <div id="quoteChange" class="quote-change" style="font-size: 1.2rem;">—</div>
+            </div>
+        </div>
+
+        <!-- Chart Card -->
+        <div class="chart-card">
+            <div style="margin-bottom: 1rem;">
+                <h2 style="margin: 0 0 0.5rem 0; color: var(--text-light);">Price Chart</h2>
+                <div class="status-row">
+                    <div id="chartStatus" class="status-badge">Chart: Demo</div>
+                </div>
+            </div>
+            <div id="chartContainer" style="height: 380px; position: relative;">
+                <canvas id="companyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- News Section -->
+        <div class="news-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0; color: var(--text-light);">Latest Company News</h2>
+                <div id="newsStatus" class="status-badge">News: Demo</div>
+            </div>
+            <div id="newsContainer" style="min-height: 200px;">
+                <p style="color: var(--text-muted); text-align: center;">News will appear here...</p>
+            </div>
+        </div>
+
+        <!-- Debug Console -->
+        <div id="debugConsole" class="debug-console">
+            <h3 style="color: var(--accent-light);">Debug Console</h3>
+            <p style="margin: 0 0 1rem 0;">Browser console messages will appear below:</p>
+        </div>
+    </div>
+
+    <!-- JS Files -->
+    <script src="chart.js"></script>
+    <script src="news.js"></script>
+    <script>
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        function addDebugMessage(msg, type = 'log') {
+            const debugConsole = document.getElementById('debugConsole');
+            const p = document.createElement('p');
+            p.style.color = type === 'error' ? '#d32f2f' : '#333';
+            p.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+            debugConsole.appendChild(p);
+            debugConsole.scrollTop = debugConsole.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog(...args);
+            addDebugMessage(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError(...args);
+            addDebugMessage(args.join(' '), 'error');
+        };
+    </script>
+
+    <script>
+      // authLink behaviour for company page (verify server session)
+      (function(){
+        async function initAuthLink(){
+          const a = document.getElementById('authLink');
+          if(!a) return;
+
+          function setState(logged){
+            if(logged){
+              a.textContent = 'Logout';
+              a.href = '#';
+              a.onclick = async function(e){ e.preventDefault(); try{ await fetch('/logout',{method:'POST'}); }catch(e){} try{ localStorage.removeItem('loggedIn'); }catch(e){} window.location.href='/index.html'; }
+            } else {
+              a.textContent = 'Login';
+              a.href = '/Login.html?returnTo=company.html';
+              a.onclick = null;
+            }
+          }
+
+          const localFlag = localStorage.getItem('loggedIn') === '1';
+          if(!localFlag){ setState(false); return; }
+
+          try{
+            const res = await fetch('/api/portfolio');
+            if(res.ok) setState(true);
+            else { try{ localStorage.removeItem('loggedIn'); }catch(e){} setState(false); }
+          }catch(e){ setState(false); }
+        }
+
+        initAuthLink();
+      })();
+    </script>
+
+</body>
+</html>

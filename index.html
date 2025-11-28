@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Landing Page</title>
+  <!-- <link rel="stylesheet" href="design.css"> -->
+   <style>
+    :root {
+  --bg-dark: #0f172a;
+  --bg-card: #1e293b;
+  --bg-hero: linear-gradient(135deg, #1d2b64, #1e3c72);
+  --text-light: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent: #6d28d9;
+  --accent-light: #a78bfa;
+  --radius: 12px;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================
+   BASE STYLE
+============================ */
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-light);
+}
+
+/* ============================
+   NAVBAR
+============================ */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 40px;
+  background: var(--bg-card);
+  color: var(--text-light);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: var(--shadow);
+}
+
+.logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent-light);
+}
+
+nav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 30px;
+}
+
+nav a {
+  text-decoration: none;
+  color: var(--text-light);
+  font-weight: 600;
+  transition: 0.25s ease;
+  letter-spacing: 0.5px;
+}
+
+nav a:hover {
+  color: var(--accent-light);
+}
+
+/* ============================
+   HERO SECTION
+============================ */
+.hero {
+  padding: 140px 40px;
+  text-align: center;
+  background: var(--bg-hero);
+  color: white;
+  box-shadow: var(--shadow);
+}
+
+.hero h1 {
+  font-size: 3.2rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* ============================
+   INFO SECTION
+============================ */
+.section {
+  max-width: 900px;
+  margin: 60px auto;
+  padding: 20px;
+  line-height: 1.7;
+  color: var(--text-light);
+}
+
+.section h2 {
+  text-align: center;
+  color: var(--accent-light);
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+}
+
+/* ============================
+   CONTACT SECTION
+============================ */
+#contact {
+  background: var(--bg-card);
+  padding: 60px 40px;
+  border-radius: var(--radius);
+  max-width: 900px;
+  margin: auto;
+  box-shadow: var(--shadow);
+}
+
+#contact h2 {
+  text-align: center;
+  color: var(--accent-light);
+  margin-bottom: 20px;
+}
+
+#contact p {
+  font-size: 1rem;
+  margin: 5px 0;
+  color: var(--text-light);
+}
+
+/* ============================
+   FOOTER
+============================ */
+footer {
+  margin-top: 60px;
+  text-align: center;
+  padding: 20px;
+  background: var(--bg-card);
+  color: var(--text-light);
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: var(--shadow);
+  font-size: 0.9rem;
+}
+
+/* ============================
+   FEATURE CARDS SECTION
+============================ */
+.features-section {
+  max-width: 1200px;
+  margin: 80px auto;
+  padding: 0 40px;
+}
+
+.features-section h2 {
+  text-align: center;
+  color: var(--accent-light);
+  font-size: 2.2rem;
+  margin-bottom: 50px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+}
+
+.feature-card {
+  background: linear-gradient(135deg, rgba(109, 40, 217, 0.1), rgba(167, 139, 250, 0.05));
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: var(--radius);
+  padding: 30px;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(167, 139, 250, 0.6);
+  box-shadow: 0 12px 40px rgba(109, 40, 217, 0.3);
+}
+
+.feature-card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+}
+
+.feature-card h3 {
+  color: var(--accent-light);
+  font-size: 1.4rem;
+  margin: 0 0 12px 0;
+}
+
+.feature-card p {
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+  flex-grow: 1;
+}
+
+.feature-card-btn {
+  align-self: flex-start;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.feature-card-btn:hover {
+  background: var(--accent-light);
+  transform: translateX(4px);
+}
+
+/* ============================
+   RESPONSIVE DESIGN
+============================ */
+@media (max-width: 768px) {
+  nav ul {
+    gap: 15px;
+  }
+
+  .hero h1 {
+    font-size: 2.4rem;
+  }
+
+  .hero {
+    padding: 100px 20px;
+  }
+
+  .section, #contact {
+    padding: 30px 20px;
+  }
+
+  .features-section {
+    padding: 0 20px;
+  }
+
+  .features-section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+  </style> 
+</head>
+<body>
+
+  <!-- NAVIGATION BAR -->
+<nav>
+  <div><a href="index.html"><div class="logo">StockMan</div></a></div>
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="#" id="portfolioBtn">Portfolio</a></li>
+    <li><a href="#" id="gameRoomsBtn">Game Rooms</a></li>
+    
+    <li><a href="market-news.html">Market</a></li>
+    <li><a href="company.html">Company</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#" id="authLink">Login</a></li>
+  </ul>
+</nav>
+
+  <!-- HERO SECTION -->
+  <section class="hero">
+    <h1>Welcome to StockMan</h1>
+    <p>Your gateway to market insights, stock analysis, and portfolio tracking.</p>
+  </section>
+
+  <!-- INFO SECTION -->
+  <section class="section">
+    <h2>About Stocks</h2>
+    <p>
+      Stocks represent ownership in a company. When you buy a stock, you're buying a share
+      of that company's future earnings. The stock market allows investors to buy and sell
+      these shares, helping companies raise capital and investors grow wealth.
+    </p>
+    <p>
+      Stock prices fluctuate based on supply and demand, company performance, global events,
+      and market sentiment. Staying informed helps investors make better decisions.
+    </p>
+  </section>
+
+  <!-- FEATURE CARDS SECTION -->
+  <section class="features-section">
+    <h2>Why Choose StockMan?</h2>
+    <div class="features-grid">
+      <!-- Card 1: Portfolio Management -->
+      <div class="feature-card">
+        <div class="feature-card-icon">📈</div>
+        <h3>Portfolio Management</h3>
+        <p>Track all your stock investments in one place. Monitor gains, losses, and overall portfolio performance with real-time updates and detailed analytics.</p>
+      </div>
+
+      <!-- Card 2: Market News -->
+      <div class="feature-card">
+        <div class="feature-card-icon">📰</div>
+        <h3>Live Market News</h3>
+        <p>Stay updated with the latest market trends, company news, and financial insights. Get breaking news delivered directly to keep you informed.</p>
+      </div>
+
+      <!-- Card 3: Company Analysis -->
+      <div class="feature-card">
+        <div class="feature-card-icon">🏢</div>
+        <h3>Company Analysis</h3>
+        <p>Deep dive into individual company stocks. View detailed charts, pricing history, and latest company news to make informed investment decisions.</p>
+      </div>
+
+      <!-- Card 4: Game Rooms (Trading Simulator) -->
+      <div class="feature-card">
+        <div class="feature-card-icon">🎮</div>
+        <h3>Trading Simulator</h3>
+        <p>Practice trading with virtual money in game rooms. Compete with other traders, learn trading strategies risk-free, and improve your trading skills.</p>
+      </div>
+
+      <!-- Card 5: Real-Time Updates -->
+      <div class="feature-card">
+        <div class="feature-card-icon">⚡</div>
+        <h3>Real-Time Updates</h3>
+        <p>Get instant price updates and market changes. Our platform refreshes prices in real-time so you never miss important market movements.</p>
+      </div>
+
+      <!-- Card 6: Get Started (Call-to-Action) -->
+      <div class="feature-card">
+        <div class="feature-card-icon">🚀</div>
+        <h3>Ready to Start?</h3>
+        <p>Join thousands of investors tracking and managing their portfolios with StockMan. Sign up today and take control of your investment journey.</p>
+        <a href="/Login.html?returnTo=page1.html" class="feature-card-btn">Get Started</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT SECTION -->
+  <section id="contact">
+    <h2>Contact Us</h2>
+    <!-- <p>Email: b23cs004@nitm.ac.in (Gabriel L Jongte)</p>
+    <p>Email: b23cs005@nitm.ac.in (Vignesh Sunil Patil)</p> -->
+    <p>Email: b23cs041@nitm.ac.in (Raunak Prabhakar)</p>
+    <p>Address: NIT Meghalaya, Sohra, Cherrapunjee, India</p>
+  </section>
+
+  <footer>
+    © 2025 StockInfo. All Rights Reserved.
+  </footer>
+
+  <!-- PORTFOLIO REDIRECT LOGIC -->
+  <script>
+    // Navigate to the portfolio page; server will redirect to login if the session is missing
+    document.getElementById("portfolioBtn").addEventListener("click", function (e) {
+      e.preventDefault();
+      window.location.href = "/page1.html";
+    });
+    // Portfolio button
+document.getElementById("portfolioBtn").addEventListener("click", function (e) {
+  e.preventDefault();
+  window.location.href = "/page1.html"; // server handles login redirect
+});
+
+// Game Rooms button
+document.getElementById("gameRoomsBtn").addEventListener("click", function (e) {
+  e.preventDefault();
+  // If not logged in, send user to Login page and request redirect back
+  const loggedIn = localStorage.getItem('loggedIn');
+  if (!loggedIn) {
+    window.location.href = "/Login.html?returnTo=game-rooms.html";
+    return;
+  }
+  window.location.href = "/game-rooms.html";
+});
+
+// Auth Link (Login / Logout) handling
+async function initAuthLink(){
+  const a = document.getElementById('authLink');
+  if(!a) return;
+
+  function setState(logged){
+    if(logged){
+      a.textContent = 'Logout';
+      a.href = '#';
+      a.onclick = async function(e){
+        e.preventDefault();
+        try{ await fetch('/logout',{method:'POST'}); }catch(e){}
+        try{ localStorage.removeItem('loggedIn'); }catch(e){}
+        window.location.href = '/index.html';
+      }
+    } else {
+      a.textContent = 'Login';
+      a.href = '/Login.html';
+      a.onclick = null;
+    }
+  }
+
+  const localFlag = localStorage.getItem('loggedIn') === '1';
+  if(!localFlag){ setState(false); return; }
+
+  try{
+    const res = await fetch('/api/portfolio');
+    if(res.ok) setState(true);
+    else { localStorage.removeItem('loggedIn'); setState(false); }
+  }catch(e){ setState(false); }
+}
+
+document.addEventListener('DOMContentLoaded', initAuthLink);
+
+  </script>
+
+</body>
+</html>

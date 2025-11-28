@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Market News</title>
+  <link rel="stylesheet" href="market.css">
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <div><a href="index.html"><div class="logo">Stockman</div></a></div>
+      <nav>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="page1.html">Portfolio</a></li>
+          <li><a href="game-rooms.html">Game Rooms</a></li>
+          <li><a href="market-news.html" class="active">Market</a></li>
+          <li><a href="company.html">Companies</a></li>
+          <li><a href="#" id="authLink">Login</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <div class="refresh-header">
+      <h1>🌍 Live Market News</h1>
+      <button class="refresh-btn" onclick="loadNews()" id="refreshBtn">
+        Latest News
+      </button>
+    </div>
+    
+    <div class="timestamp" id="timestamp"></div>
+    
+    <div id="news-container">
+      <div class="loading">Loading market news...</div>
+    </div>
+  </div>
+
+  <script>
+    let lastRefreshTime = null;
+
+    function updateTimestamp() {
+      const now = new Date();
+      lastRefreshTime = now;
+      const timestampElement = document.getElementById('timestamp');
+      timestampElement.textContent = `Last updated: ${now.toLocaleString()}`;
+    }
+
+    async function loadNews() {
+      const refreshBtn = document.getElementById('refreshBtn');
+      const container = document.getElementById('news-container');
+      
+      try {
+        // Show loading state
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = '🔄 Loading...';
+        container.innerHTML = '<div class="loading">Loading latest market news...</div>';
+
+        const response = await fetch('/api/market-news');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch news: ${response.status}`);
+        }
+        
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+          container.innerHTML = '<div class="no-news">No market news available at the moment. Please try again later.</div>';
+          return;
+        }
+
+        container.innerHTML = '';
+
+        data.forEach(article => {
+          const card = document.createElement('div');
+          card.className = 'news-card';
+
+          // Format the content safely
+          const title = article.title || 'No title available';
+          const description = article.description || 'No description available.';
+          const image = article.urlToImage ? `<img src="${article.urlToImage}" alt="${title}" onerror="this.style.display='none'">` : '';
+          const url = article.url || '#';
+
+          card.innerHTML = `
+            <h2>${title}</h2>
+            <p>${description}</p>
+            ${image}
+            <div class="news-footer">
+              <a href="${url}" target="_blank">Read more →</a>
+              <span class="news-source">${article.source?.name || 'Unknown source'}</span>
+            </div>
+          `;
+
+          container.appendChild(card);
+        });
+
+        // Update timestamp
+        updateTimestamp();
+
+      } catch (error) {
+        console.error('Error loading news:', error);
+        container.innerHTML = `
+          <div class="error-message">
+            <p>Failed to load market news. Please try again later.</p>
+            <button onclick="loadNews()" class="retry-btn">Retry</button>
+          </div>
+        `;
+      } finally {
+        // Reset button state
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '🔄 Latest News';
+      }
+    }
+
+    // Load news immediately when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Page loaded - loading news');
+      loadNews();
+      
+      // Also refresh when user focuses on the page (optional)
+      window.addEventListener('focus', function() {
+        // Refresh if it's been more than 1 minute since last refresh
+        if (!lastRefreshTime || (new Date() - lastRefreshTime) > 60000) {
+          console.log('Page focused - refreshing news');
+          loadNews();
+        }
+      });
+    });
+
+    // Auto-refresh every 5 minutes (300000 ms)
+    setInterval(function() {
+      console.log('Auto-refresh interval triggered');
+      loadNews();
+    }, 300000);
+
+    // authLink behaviour for market page
+    (function(){
+      async function initAuthLink(){
+        const a = document.getElementById('authLink');
+        if(!a) return;
+
+        function setState(logged){
+          if(logged){
+            a.textContent = 'Logout';
+            a.href = '#';
+            a.onclick = async function(e){ e.preventDefault(); try{ await fetch('/logout',{method:'POST'}); }catch(e){} try{ localStorage.removeItem('loggedIn'); }catch(e){} window.location.href='/index.html'; }
+          } else {
+            a.textContent = 'Login';
+            a.href = '/Login.html?returnTo=market-news.html';
+            a.onclick = null;
+          }
+        }
+
+        const localFlag = localStorage.getItem('loggedIn') === '1';
+        if(!localFlag){ setState(false); return; }
+
+        try{
+          const res = await fetch('/api/portfolio');
+          if(res.ok) setState(true);
+          else { try{ localStorage.removeItem('loggedIn'); }catch(e){} setState(false); }
+        }catch(e){ setState(false); }
+      }
+
+      initAuthLink();
+    })();
+
+    // Manual refresh with F5 key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
+        event.preventDefault();
+        loadNews();
+      }
+    });
+
+    // Add pull-to-refresh on mobile (basic implementation)
+    let touchStartY = 0;
+    document.addEventListener('touchstart', function(e) {
+      touchStartY = e.touches[0].clientY;
+    });
+
+    document.addEventListener('touchmove', function(e) {
+      if (window.scrollY === 0 && e.touches[0].clientY - touchStartY > 100) {
+        loadNews();
+      }
+    });
+  </script>
+</body>
+</html>

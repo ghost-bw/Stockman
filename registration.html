@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Register - Stock Simulator</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .box {
+      background: #1b1b1b;
+      padding: 2rem;
+      border-radius: 8px;
+      width: 320px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 1.2rem;
+      font-size: 1.4rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: .25rem;
+      font-size: .9rem;
+      text-align: left;
+    }
+
+    input {
+      width: 100%;
+      padding: .5rem;
+      margin-bottom: 1rem;
+      border-radius: 5px;
+      border: 1px solid #333;
+      background: #222;
+      color: #eee;
+    }
+
+    button {
+      width: 100%;
+      padding: .6rem;
+      border: none;
+      border-radius: 5px;
+      background: #4a5cff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #3648ff;
+    }
+
+    a {
+      color: #4a5cff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+
+</head>
+<body>
+
+  <div class="box">
+    <h1>Create Account</h1>
+
+    <form action="/register" method="POST">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" required>
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required>
+
+      <button type="submit">Register</button>
+    </form>
+
+    <p style="margin-top: 1rem; font-size: 0.9rem;">
+      Already have an account?  
+      <a href="Login.html">Login here</a>
+    </p>
+  </div>
+
+</body>
+</html>

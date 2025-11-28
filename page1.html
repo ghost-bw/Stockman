@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stockman | Portfolio</title>
+
+  <!-- Google Font & Chart.js -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Link CSS -->
+  <link rel="stylesheet" href="design.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div><a href="index.html"><div class="logo">Stockman</div></a></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <nav>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="page1.html">Portfolio</a></li>
+            <li><a href="game-rooms.html">Game Rooms</a></li>
+            <li><a href="market-news.html">Market</a></li>
+            <li><a href="company.html">Companies</a></li>
+          </ul>
+        </nav>
+        <!-- <button id="logoutBtn" style="padding:8px 12px;border-radius:8px;border:none;background:#ef4444;color:white;cursor:pointer;">Logout</button> -->
+        <a href="#" id="authLink" style="color:var(--text-light); font-weight:600; text-decoration:none;">Login</a>
+      </div>
+    </header>
+
+    <main class="portfolio-card">
+      <div class="profile-row">
+        <div class="profile-title">
+          <input type="text" class="search-bar" placeholder="Search for Companies" />
+          <h2>Your Portfolio</h2>
+        </div>
+        <div class="rank-badge">#2</div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-range="1w">1 Week</div>
+        <div class="tab" data-range="1m">1 Month</div>
+        <div class="tab" data-range="3m">3 Months</div>
+        <div class="tab" data-range="all">All Time</div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="portfolioChart"></canvas>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <p>Net Worth</p>
+          <h3>$100000</h3>
+        </div>
+        <div class="stat">
+          <p>Overall Gains</p>
+          <h3 class="green">$0</h3>
+        </div>
+        <div class="stat">
+          <p>Overall Returns</p>
+          <h3 class="green">0%</h3>
+        </div>
+        <div class="stat">
+          <p>Buying Power</p>
+          <h3>$500</h3>
+        </div>
+        <div class="stat">
+          <p>Cash Borrowed</p>
+          <h3>$0</h3>
+        </div>
+      </div>
+    </main>
+  </div>
+<div id="companyModal" class="company-modal" aria-hidden="true">
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <button id="modalClose" class="modal-close">✕</button>
+    <div class="modal-head">
+      <h3 id="modalName">Company Name</h3>
+      <div id="modalSymbol">SYM</div>
+    </div>
+
+    <div class="modal-body">
+      <div class="quote-row">
+        <div class="quote-main">
+          <div class="price" id="modalPrice">—</div>
+          <div id="modalChange" class="change">—</div>
+        </div>
+        <div class="quote-stats">
+          <div><small>Open</small><div id="modalOpen">—</div></div>
+          <div><small>High</small><div id="modalHigh">—</div></div>
+          <div><small>Low</small><div id="modalLow">—</div></div>
+          <div><small>Prev Close</small><div id="modalPrev">—</div></div>
+        </div>
+      </div>
+
+      <div class="mini-chart-container">
+        <canvas id="modalChart" width="400" height="160"></canvas>
+      </div>
+
+     <div class="modal-footer">
+  <div style="display:flex; gap:8px; align-items:center;">
+    <label for="modalQty" style="font-size:0.9rem;color:var(--text-muted);">Qty</label>
+    <input id="modalQty" type="number" min="1" step="1" value="1" style="width:80px; padding:6px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:var(--text-light);">
+    <button id="modalBuyBtn" class="modal-buy">Buy</button>
+  </div>
+  <div style="margin-left:12px;">
+    <button id="addToPortfolio">Add to Portfolio</button>
+  </div>
+</div>
+    </div>
+  </div>
+</div>
+<div id="holdingsSection" style="margin-top:1rem;">
+  <h3 style="margin-top:0;">Holdings</h3>
+  <div id="holdingsList"></div>
+</div>
+  <!-- Link JS -->
+  <script src="script.js"></script>
+  <script>
+    // Logout handler: call server /logout then redirect to login
+    document.addEventListener('DOMContentLoaded', function () {
+      const btn = document.getElementById('logoutBtn');
+      if (btn) {
+        btn.addEventListener('click', async function () {
+          try {
+            btn.disabled = true;
+            btn.textContent = 'Logging out...';
+            await fetch('/logout', { method: 'POST' });
+            try { localStorage.removeItem('loggedIn'); } catch (e) {}
+            window.location.href = '/index.html';
+          } catch (e) {
+            console.error('Logout failed', e);
+            btn.disabled = false;
+            btn.textContent = 'Logout';
+            alert('Logout failed. Please try again.');
+          }
+        });
+      }
+
+      // update authLink next to header (works even if logoutBtn absent)
+        // initialize auth link: prefer server-side verification to avoid stale client flag
+        async function initAuthLink(){
+          const a = document.getElementById('authLink');
+          if(!a) return;
+
+          function setState(logged){
+            if(logged){
+              a.textContent = 'Logout';
+              a.href = '#';
+              a.onclick = async function(e){ e.preventDefault(); try{ await fetch('/logout',{method:'POST'}); }catch(e){} try{ localStorage.removeItem('loggedIn'); }catch(e){} window.location.href='/index.html'; };
+            } else {
+              a.textContent = 'Login';
+              a.href = '/Login.html?returnTo=page1.html';
+              a.onclick = null;
+            }
+          }
+
+          const localFlag = localStorage.getItem('loggedIn') === '1';
+          if(!localFlag){ setState(false); return; }
+
+          try{
+            const res = await fetch('/api/portfolio');
+            if(res.ok) setState(true);
+            else { try{ localStorage.removeItem('loggedIn'); }catch(e){} setState(false); }
+          }catch(e){ setState(false); }
+        }
+
+        initAuthLink();
+    });
+  </script>
+</body>
+</html>

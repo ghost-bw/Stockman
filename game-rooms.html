@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stockman | Game Rooms</title>
+  <link rel="stylesheet" href="design.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    .room-card {
+      background: rgba(255,255,255,0.03);
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .room-title { font-size:1.2rem; font-weight:600; }
+    .room-sub { font-size:0.9rem; color:var(--text-muted); }
+    .btn {
+      padding: 8px 12px;
+      border-radius:8px;
+      outline:none;
+      border:none;
+      cursor:pointer;
+      font-weight:600;
+    }
+    .btn-primary { background:#2b6ef6; color:white; }
+    .btn-danger { background:#ef4444; color:white; }
+    .btn-outline {
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.2);
+      color:#ddd;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- HEADER -->
+    <header>
+      <div><a href="index.html"><div class="logo">Stockman</div></a></div>
+      <nav>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="page1.html">Portfolio</a></li>
+          <li><a href="market-news.html">Market</a></li>
+          <li><a href="company.html">Companies</a></li>
+          <li><a href="game-rooms.html" class="active">Game Rooms</a></li>
+        
+          <li><a href="#" id="authLink">Login</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- PAGE TITLE -->
+    <main class="portfolio-card">
+
+      <h2 style="margin-bottom:1rem;">Game Rooms</h2>
+
+      <!-- CREATE ROOM -->
+      <div class="room-card">
+        <h3>Create Game Room</h3>
+        <div style="margin-top:0.5rem; display:flex; flex-wrap:wrap; gap:8px;">
+          <input id="roomName" type="text" placeholder="Room Name"
+            style="padding:6px 8px; border-radius:8px; background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.1); width:200px;">
+
+          <input id="roomAmount" type="number" min="100" placeholder="Starting Principal"
+            style="padding:6px 8px; border-radius:8px; background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.1); width:180px;">
+
+          <button id="createRoomBtn" class="btn btn-primary">Create</button>
+        </div>
+      </div>
+
+      <!-- ROOMS LIST -->
+      <section id="roomsContainer"></section>
+
+    </main>
+  </div>
+
+  <script>
+  /* ------------------------------------
+     Load Rooms
+  ------------------------------------- */
+  const roomsContainer = document.getElementById("roomsContainer");
+  const createRoomBtn = document.getElementById("createRoomBtn");
+  const roomNameInput = document.getElementById("roomName");
+  const roomAmountInput = document.getElementById("roomAmount");
+
+  function formatMoney(v) {
+    return Number(v).toLocaleString(undefined,{
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    });
+  }
+
+  /* ------------------------------------
+     Fetch and render rooms
+  ------------------------------------- */
+  async function loadRooms() {
+    try {
+      const res = await fetch(`/api/game-rooms`, { cache: "no-store" });
+      if (res.status === 401) return window.location = "/";
+      const rooms = await res.json();
+
+      roomsContainer.innerHTML = "";
+
+      rooms.forEach(r => {
+        const isOwner = r.is_owner;
+        const html = `
+          <div class="room-card">
+            <div style="display:flex; justify-content:space-between;">
+              <div>
+                <div class="room-title">${r.name}</div>
+                <div class="room-sub">
+                  Starting: $${formatMoney(r.base_amount)} &bull; 
+                  Players: ${r.participants}
+                </div>
+                <div class="room-sub">
+                  Created by: <strong>${r.created_by_name}</strong>
+                </div>
+              </div>
+
+              <div style="display:flex; flex-direction:column; gap:6px;">
+
+                <button class="btn btn-primary"
+                  onclick="goToRoom(${r.room_id})">
+                  Enter Room
+                </button>
+
+                <button class="btn btn-outline"
+                  onclick="joinRoom(${r.room_id})">
+                  Join
+                </button>
+
+                ${isOwner ? `
+                  <button class="btn btn-danger"
+                    onclick="deleteRoom(${r.room_id})">
+                    Delete
+                  </button>` : ""}
+              </div>
+            </div>
+          </div>
+        `;
+        roomsContainer.innerHTML += html;
+      });
+
+    } catch (e) {
+      console.warn("Failed to load rooms:", e);
+    }
+  }
+
+  /* ------------------------------------
+     JOIN ROOM
+  ------------------------------------- */
+  async function joinRoom(id) {
+    const res = await fetch(`/api/game-rooms/${id}/join`, { method:"POST" });
+    const json = await res.json().catch(()=>({}));
+
+    if (!res.ok) {
+      alert(json.error || "Failed to join room.");
+      return;
+    }
+
+    alert("Joined room successfully!");
+    loadRooms();
+  }
+
+  /* ------------------------------------
+     DELETE ROOM
+  ------------------------------------- */
+  async function deleteRoom(id) {
+    if (!confirm("Delete this game room?")) return;
+
+    const res = await fetch(`/api/game-rooms/${id}`, {
+      method:"DELETE"
+    });
+
+    if (res.ok) {
+      alert("Room deleted.");
+      loadRooms();
+    } else {
+      alert("Failed to delete room.");
+    }
+  }
+
+  /* ------------------------------------
+     CREATE ROOM
+  ------------------------------------- */
+  createRoomBtn.addEventListener("click", async () => {
+    const name = roomNameInput.value.trim();
+    const amount = Number(roomAmountInput.value);
+
+    if (!name || !amount || amount <= 0) {
+      return alert("Enter a valid room name and principal.");
+    }
+
+    const res = await fetch(`/api/game-rooms`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ name, base_amount: amount })
+    });
+
+    const json = await res.json().catch(()=>({}));
+
+    if (!res.ok) {
+      alert(json.error || "Room creation failed.");
+      return;
+    }
+
+    alert("Room created!");
+    roomNameInput.value = "";
+    roomAmountInput.value = "";
+    loadRooms();
+  });
+
+  /* ------------------------------------
+     Go To Room Page
+  ------------------------------------- */
+  function goToRoom(id) {
+    window.location = `/game-room.html?roomId=${id}`;
+  }
+
+  /* ------------------------------------
+     Initial Load
+  ------------------------------------- */
+  loadRooms();
+  </script>
+
+  <script>
+    // Ensure logged-in state and update auth link
+    function updateAuthLink(){
+      const a = document.getElementById('authLink');
+      if(!a) return;
+      // placeholder; real initialization runs in initAuthLink below
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      // prefer server-verified auth. If not logged in, redirect to login.
+      (async function(){
+        const localFlag = localStorage.getItem('loggedIn') === '1';
+        if(!localFlag){ window.location = '/Login.html?returnTo=game-rooms.html'; return; }
+
+        try{
+          const res = await fetch('/api/portfolio');
+          if(!res.ok) { localStorage.removeItem('loggedIn'); window.location = '/Login.html?returnTo=game-rooms.html'; return; }
+        }catch(e){ localStorage.removeItem('loggedIn'); window.location = '/Login.html?returnTo=game-rooms.html'; return; }
+
+        // now initialize auth link display
+        const a = document.getElementById('authLink');
+        if(!a) return;
+        a.textContent = 'Logout';
+        a.href = '#';
+        a.onclick = async function(e){ e.preventDefault(); try{ await fetch('/logout',{method:'POST'}); }catch(e){} try{ localStorage.removeItem('loggedIn'); }catch(e){} window.location.href='/index.html'; };
+      })();
+    });
+  </script>
+
+</body>
+</html>

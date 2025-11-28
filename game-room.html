@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stockman | Game Room</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design.css">
+
+  <style>
+  #chartWrapper {
+    width: 100%;
+    height: 360px;
+    padding: 20px;
+    margin-top: 1rem;
+    position: relative;
+    background: rgba(255,255,255,0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+  }
+
+  #chartCanvas {
+    max-width: 100%;
+    height: 360px;
+  }
+
+
+
+    .stats-grid { display:flex; gap:12px; flex-wrap:wrap; }
+    .stat { background: rgba(255,255,255,0.02); padding:14px; border-radius:10px; min-width:160px; text-align:center; }
+    .primary-btn { background:#2b6ef6; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+    .green{ color:#33cc66; } 
+    .red{ color:#ef4444; }
+    #leaveRoomBtn { background:#ff4444; padding:8px 12px; border-radius:8px; cursor:pointer; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- HEADER -->
+    <header>
+      <div><a href="index.html"><div class="logo">Stockman</div></a></div>
+      <nav>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="page1.html">Portfolio</a></li>
+          <li><a href="market-news.html">Market</a></li>
+          <li><a href="company.html">Companies</a></li>
+          <li><a href="game-rooms.html" class="active">Game Rooms</a></li>
+       
+          <li><a href="#" id="authLink">Login</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- MAIN -->
+    <main class="portfolio-card">
+
+      <!-- HEADER -->
+      <div class="profile-row">
+        <div class="profile-title">
+          <h2 id="roomTitle">Game Room</h2>
+
+          <div style="margin-top:6px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+            <div>
+              <label style="font-size:0.9rem; color:var(--text-muted);">Sort:</label>
+              <select id="sortSelect" style="padding:4px 8px; border-radius:6px;">
+                <option value="assets">Total Assets</option>
+                <option value="gains">Gains</option>
+              </select>
+            </div>
+
+            <button id="leaveRoomBtn">Leave Room</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD -->
+      <section style="margin-top:1rem;">
+        <table class="data-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>User</th>
+              <th>Principal</th>
+              <th>Total Assets</th>
+              <th>Gains</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+      </section>
+
+      <!-- PORTFOLIO -->
+      <section style="margin-top:2rem;">
+        <h3>Your Game Room Portfolio</h3>
+        <p id="gameStatusMessage" style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">Loading...</p>
+
+        <div id="gameAccountSummary" class="stats-grid" style="margin-bottom:1rem;">
+          <div class="stat"><p>Principal</p><h3 id="gamePrincipal">$0.00</h3></div>
+          <div class="stat"><p>Game Cash</p><h3 id="gameCash">$0.00</h3></div>
+          <div class="stat"><p>Game Net Worth</p><h3 id="gameNetWorth">$0.00</h3></div>
+          <div class="stat"><p>Game Gains</p><h3 id="gameGains" class="green">$0.00</h3></div>
+        </div>
+
+        <!-- TRADE PANEL -->
+        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; margin-bottom:1rem;">
+          <div style="position:relative;">
+  <label>Symbol</label><br>
+  <input id="gameSymbol" type="text" placeholder="AAPL"
+    autocomplete="off"
+    style="padding:6px 8px; border-radius:8px; background:transparent; color:#fff;">
+
+  <!-- Suggestions box -->
+  <div id="symbolSuggestions"
+       style="position:absolute; top:58px; left:0; width:200px; 
+              background:#1e293b; border:1px solid #444; 
+              border-radius:8px; display:none;
+              max-height:150px; overflow-y:auto; z-index:1000;">
+  </div>
+</div>
+
+
+          <div>
+            <label>Quantity</label><br>
+            <input id="gameQty" type="number" min="1" value="1"
+              style="padding:6px 8px; border-radius:8px; background:transparent; color:#fff;">
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button id="gameBuyBtn" class="primary-btn">Buy (Game)</button>
+            <button id="gameSellBtn" class="primary-btn" style="background:#ef4444;">Sell (Game)</button>
+          </div>
+        </div>
+
+        <!-- HOLDINGS -->
+       <div id="gameHoldingsContainer" style="margin-bottom: 1rem;"></div>
+
+        <!-- FIXED HEIGHT CHART WRAPPER -->
+        <div id="chartWrapper">
+          <canvas id="chartCanvas"></canvas>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+/* ------------------------------------------
+   GLOBAL
+------------------------------------------- */
+let refreshInterval=null;
+let isRefreshing=false;
+let roomId=new URLSearchParams(window.location.search).get("roomId");
+if(!roomId){ window.location.href="/game-rooms.html"; }
+
+// Require client-side login before entering a room
+(function(){
+  try{
+    const loggedIn = localStorage.getItem('loggedIn');
+    if(!loggedIn){
+      const full = '/game-room.html?roomId=' + encodeURIComponent(roomId || '');
+      window.location.href = '/Login.html?returnTo=' + encodeURIComponent(full);
+    }
+  }catch(e){}
+})();
+
+let plChart=null;
+let plHistory=[];
+
+/* DOM ELEMENTS */
+const leaderboardBody=document.getElementById("leaderboardBody");
+const sortSelect=document.getElementById("sortSelect");
+const leaveRoomBtn=document.getElementById("leaveRoomBtn");
+
+const gamePrincipalEl=document.getElementById("gamePrincipal");
+const gameCashEl=document.getElementById("gameCash");
+const gameNetWorthEl=document.getElementById("gameNetWorth");
+const gameGainsEl=document.getElementById("gameGains");
+
+const gameStatusMessageEl=document.getElementById("gameStatusMessage");
+const holdingsContainer=document.getElementById("gameHoldingsContainer");
+
+const symbolInput=document.getElementById("gameSymbol");
+const qtyInput=document.getElementById("gameQty");
+
+const buyBtn=document.getElementById("gameBuyBtn");
+const sellBtn=document.getElementById("gameSellBtn");
+
+/* ------------------------------------------
+   HELPERS
+------------------------------------------- */
+function formatMoney(v){
+  return Number(v||0).toLocaleString(undefined,{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  });
+}
+
+/* ------------------------------------------
+   LEAVE ROOM
+------------------------------------------- */
+leaveRoomBtn.addEventListener("click", async ()=>{
+  if(!confirm("Leave this Game Room?")) return;
+  await fetch(`/api/game-rooms/${roomId}/leave`,{method:"POST"});
+  window.location.href="/game-rooms.html";
+});
+
+/* ------------------------------------------
+   LEADERBOARD
+------------------------------------------- */
+async function loadLeaderboard(){
+  try{
+    const r=await fetch(`/api/game-rooms/${roomId}/leaderboard?sort=${sortSelect.value}`);
+    if(r.status===401) return location="/";
+
+    const list=await r.json();
+    leaderboardBody.innerHTML="";
+
+    list.forEach((x,i)=>{
+      const col=x.gains>0?"green":x.gains<0?"red":"";
+      leaderboardBody.innerHTML+=`
+        <tr>
+          <td>${i+1}</td>
+          <td>${x.username}</td>
+          <td>$${formatMoney(x.starting_principal)}</td>
+          <td>$${formatMoney(x.net_worth)}</td>
+          <td class="${col}">$${formatMoney(x.gains)}</td>
+        </tr>`;
+    });
+
+  }catch(e){ console.warn(e); }
+}
+sortSelect.addEventListener("change", loadLeaderboard);
+
+/* ------------------------------------------
+   PORTFOLIO
+------------------------------------------- */
+async function loadPortfolio(){
+  try{
+    const r=await fetch(`/api/game-rooms/${roomId}/portfolio`);
+    if(r.status===404){
+      gameStatusMessageEl.textContent="You haven't joined this room yet.";
+      return;
+    }
+
+    const data=await r.json();
+    const acc=data.account;
+    const holdings=data.holdings;
+
+    const principal=acc.starting_principal;
+    const cash=acc.cash;
+    const net=acc.net_worth;
+    const gains=+(net - principal).toFixed(2);
+
+    gamePrincipalEl.textContent="$"+formatMoney(principal);
+    gameCashEl.textContent="$"+formatMoney(cash);
+    gameNetWorthEl.textContent="$"+formatMoney(net);
+    gameGainsEl.textContent="$"+formatMoney(gains);
+
+    gameGainsEl.classList.toggle("green",gains>=0);
+    gameGainsEl.classList.toggle("red",gains<0);
+
+    gameStatusMessageEl.textContent="Your in-room virtual portfolio.";
+
+    renderHoldings(holdings);
+    await loadHistory();
+
+  }catch(e){ console.warn(e); }
+}
+
+/* ------------------------------------------
+   HOLDINGS TABLE
+------------------------------------------- */
+function renderHoldings(list){
+  if(!list.length){
+    holdingsContainer.innerHTML='<div style="color:#888">No holdings.</div>';
+    return;
+  }
+
+  let html=`
+    <table class="data-table" style="width:100%; margin-top:0.5rem;">
+      <thead><tr>
+        <th>Symbol</th><th>Qty</th><th>Avg Cost</th>
+        <th>Last Price</th><th>Market Value</th><th>Unrealized P/L</th>
+      </tr></thead><tbody>`;
+
+  for(const h of list){
+    const col=h.unrealized_pl>0?"green":h.unrealized_pl<0?"red":"";
+    html+=`
+      <tr>
+        <td>${h.symbol}</td>
+        <td>${h.qty}</td>
+        <td>$${formatMoney(h.avg_cost)}</td>
+        <td>$${formatMoney(h.last_price)}</td>
+        <td>$${formatMoney(h.market_value)}</td>
+        <td class="${col}">$${formatMoney(h.unrealized_pl)}</td>
+      </tr>`;
+  }
+
+  html+="</tbody></table>";
+  holdingsContainer.innerHTML=html;
+}
+
+/* ------------------------------------------
+   TRADING
+------------------------------------------- */
+
+const symbolBox = document.getElementById("gameSymbol");
+const suggestionBox = document.getElementById("symbolSuggestions");
+let suggestionTimeout = null;
+
+// Show suggestions
+symbolBox.addEventListener("input", () => {
+  const q = symbolBox.value.trim();
+  if (!q) {
+    suggestionBox.style.display = "none";
+    return;
+  }
+
+  // debounce 250ms
+  clearTimeout(suggestionTimeout);
+  suggestionTimeout = setTimeout(() => loadSuggestions(q), 250);
+});
+
+async function loadSuggestions(query) {
+  try {
+    const r = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+    const list = await r.json();
+
+    if (!list.length) {
+      suggestionBox.style.display = "none";
+      return;
+    }
+
+    suggestionBox.innerHTML = "";
+    list.slice(0, 8).forEach(item => {
+      const div = document.createElement("div");
+      div.textContent = `${item.symbol} — ${item.name}`;
+      div.style.padding = "6px 10px";
+      div.style.cursor = "pointer";
+      div.style.color = "#ddd";
+
+      div.addEventListener("mouseover", () => div.style.background = "#334155");
+      div.addEventListener("mouseout", () => div.style.background = "transparent");
+
+      div.addEventListener("click", () => {
+        symbolBox.value = item.symbol;
+        suggestionBox.style.display = "none";
+      });
+
+      suggestionBox.appendChild(div);
+    });
+
+    suggestionBox.style.display = "block";
+
+  } catch (e) {
+    console.warn("Suggestion error:", e);
+  }
+}
+
+// Hide suggestions if clicked outside
+document.addEventListener("click", (e) => {
+  if (!symbolBox.contains(e.target) && !suggestionBox.contains(e.target)) {
+    suggestionBox.style.display = "none";
+  }
+});
+
+
+async function doTrade(type){
+  const symbol=symbolInput.value.trim().toUpperCase();
+  const qty=Math.floor(Number(qtyInput.value));
+
+  if(!symbol || qty<=0) return alert("Invalid symbol/qty.");
+
+  const btn = type==="buy" ? buyBtn : sellBtn;
+  const old = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Processing...";
+
+  const endpoint = `/api/game-rooms/${roomId}/${type}`;
+
+  try {
+    const r = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ symbol, qty })
+    });
+
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) alert(j.error || "Trade failed.");
+
+    // ⭐ ADD THIS ⭐
+    await fetch(`/api/game-rooms/${roomId}/record-history`, {
+      method: "POST"
+    });
+
+    await loadPortfolio();
+    await loadLeaderboard();
+    await loadHistory();
+
+  } catch (e) {
+    alert("Trade failed.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+}
+
+
+buyBtn.addEventListener("click",()=>doTrade("buy"));
+sellBtn.addEventListener("click",()=>doTrade("sell"));
+
+/* ------------------------------------------
+   HISTORY + DYNAMIC SCALING CHART
+------------------------------------------- */
+async function loadHistory(){
+  try{
+    const r=await fetch(`/api/game-rooms/${roomId}/history?limit=80`);
+    const j=await r.json();
+    plHistory=(j.history||[]).map(h=>({
+      time:new Date(h.ts*1000),
+      value:Number(h.net_worth)
+    }));
+
+    console.log(`[Chart] Loaded ${plHistory.length} history points, latest net worth: $${plHistory[plHistory.length-1]?.value.toFixed(2) || 'N/A'}`);
+
+    if(!plChart) initChart();
+    updateChart();
+
+  }catch(e){ console.warn("Failed to load history:", e); }
+}
+
+function initChart(){
+  const ctx = document.getElementById("chartCanvas").getContext("2d");
+
+  // Gradient fill
+  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, "rgba(167, 139, 250, 0.35)");
+  gradient.addColorStop(1, "rgba(167, 139, 250, 0)");
+
+  plChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: "Game Net Worth",
+          data: [],
+          borderColor: "#a78bfa",
+          backgroundColor: gradient,
+          borderWidth: 3,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: "#a78bfa",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 600,
+        easing: "easeOutQuad",
+      },
+      plugins: {
+        legend: {
+          labels: { color: "#ddd" },
+        },
+        tooltip: {
+          backgroundColor: "rgba(0,0,0,0.8)",
+          padding: 12,
+          titleColor: "#fff",
+          bodyColor: "#ddd",
+          borderColor: "#a78bfa",
+          borderWidth: 1,
+          callbacks: {
+            label: (ctx) => `$${Number(ctx.raw).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: "#aaa", maxRotation: 45, minRotation: 0 },
+          grid: { display: false },
+        },
+        y: {
+          ticks: { 
+            color: "#aaa",
+            callback: (val) => "$" + val.toLocaleString(),
+          },
+          grid: { color: "rgba(255,255,255,0.05)" },
+        },
+      },
+    },
+  });
+}
+
+
+function updateChart() {
+  if (!plChart) return;
+  if (!plHistory || !plHistory.length) {
+    plChart.data.labels = [];
+    plChart.data.datasets[0].data = [];
+    plChart.update();
+    return;
+  }
+
+  const values = plHistory.map(x => x.value);
+  const labels = plHistory.map(x =>
+    x.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  );
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  let padding = (max - min) * 0.05;
+  
+  // Handle case where all values are the same
+  if (padding === 0) {
+    padding = Math.abs(max) * 0.1 || 100;
+  }
+
+  plChart.data.labels = labels;
+  plChart.data.datasets[0].data = values;
+
+  // Set dynamic y-axis bounds with padding
+  plChart.options.scales.y.min = Math.max(0, min - padding);
+  plChart.options.scales.y.max = max + padding;
+
+  plChart.update('none'); // 'none' prevents animation on every update
+}
+
+
+
+/* ------------------------------------------
+   AUTO REFRESH
+------------------------------------------- */
+async function refresh() {
+  if (isRefreshing) return;
+  isRefreshing = true;
+
+  try {
+    console.log('[Refresh] Starting price refresh cycle...');
+    
+    // Refresh game-room prices
+    const r = await fetch(`/api/game-rooms/${roomId}/refresh-prices`, {
+      method: "POST"
+    });
+
+    if (!r.ok) {
+      console.warn('[Refresh] Price refresh failed:', await r.text());
+      isRefreshing = false;
+      return;
+    }
+
+    const priceData = await r.json();
+    console.log('[Refresh] Prices updated:', priceData.updated?.length || 0, 'symbols');
+
+    // Wait a moment for database to settle
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Record history with new prices
+    const historyRes = await fetch(`/api/game-rooms/${roomId}/record-history`, {
+      method: "POST"
+    });
+
+    if (historyRes.ok) {
+      const historyData = await historyRes.json();
+      console.log('[Refresh] History recorded - Net Worth: $' + Number(historyData.net_worth).toFixed(2));
+    } else {
+      console.warn('[Refresh] History record failed:', await historyRes.text());
+    }
+
+    // Reload UI data
+    await Promise.all([
+      loadPortfolio(),
+      loadLeaderboard(),
+      loadHistory()
+    ]);
+    
+    console.log('[Refresh] UI updated');
+
+  } catch (e) {
+    console.warn('[Refresh] Error during refresh cycle:', e);
+  }
+
+  isRefreshing = false;
+}
+
+function startAuto(){
+  if(refreshInterval) clearInterval(refreshInterval);
+  console.log('[Auto] Starting 5-second refresh interval');
+  refreshInterval = setInterval(refresh, 5000);
+}
+
+
+
+/* ------------------------------------------
+   INIT
+------------------------------------------- */
+(async function init(){
+  await loadLeaderboard();
+  await loadPortfolio();
+  
+  // Record initial history snapshot
+  await fetch(`/api/game-rooms/${roomId}/record-history`, {
+    method: "POST"
+  }).catch(e => console.warn("Failed to record initial history:", e));
+  
+  // Load and display history (this initializes the chart)
+  await loadHistory();
+  
+  startAuto();
+})();
+</script>
+
+<script>
+  // update auth link display (login/logout)
+  (function(){
+    const a = document.getElementById('authLink');
+    if(!a) return;
+    const loggedIn = localStorage.getItem('loggedIn');
+    if(loggedIn){
+    a.textContent = 'Logout';
+    a.href = '#';
+    a.onclick = async function(e){ e.preventDefault(); try{ await fetch('/logout',{method:'POST'}); }catch(e){} try{ localStorage.removeItem('loggedIn'); }catch(e){} window.location.href='/index.html'; }
+    } else {
+      a.textContent = 'Login';
+      // when clicked, redirect to login and ask to return to this room
+      const roomId = new URLSearchParams(window.location.search).get('roomId');
+      const full = '/game-room.html?roomId=' + encodeURIComponent(roomId || '');
+      a.href = '/Login.html?returnTo=' + encodeURIComponent(full);
+      a.onclick = null;
+    }
+  })();
+</script>
+
+</body>
+</html>
